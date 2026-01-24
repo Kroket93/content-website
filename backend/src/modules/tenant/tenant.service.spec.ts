@@ -7,6 +7,7 @@ import { TenantService } from './tenant.service';
 import { Tenant } from '../../entities/tenant.entity';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
+import { StylingService } from '../../styling/styling.service';
 
 describe('TenantService', () => {
   let service: TenantService;
@@ -15,6 +16,9 @@ describe('TenantService', () => {
     get: jest.Mock;
     set: jest.Mock;
     del: jest.Mock;
+  };
+  let stylingService: {
+    createDefaultStyling: jest.Mock;
   };
 
   const mockTenant: Tenant = {
@@ -50,6 +54,10 @@ describe('TenantService', () => {
       del: jest.fn(),
     };
 
+    stylingService = {
+      createDefaultStyling: jest.fn().mockResolvedValue({}),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TenantService,
@@ -60,6 +68,10 @@ describe('TenantService', () => {
         {
           provide: CACHE_MANAGER,
           useValue: cacheManager,
+        },
+        {
+          provide: StylingService,
+          useValue: stylingService,
         },
       ],
     }).compile();
@@ -73,7 +85,7 @@ describe('TenantService', () => {
   });
 
   describe('create', () => {
-    it('should create a new tenant', async () => {
+    it('should create a new tenant and default styling', async () => {
       const createTenantDto: CreateTenantDto = {
         slug: 'tech-blog',
         name: 'Tech Blog',
@@ -87,10 +99,11 @@ describe('TenantService', () => {
 
       expect(repository.create).toHaveBeenCalledWith(createTenantDto);
       expect(repository.save).toHaveBeenCalledWith(mockTenant);
+      expect(stylingService.createDefaultStyling).toHaveBeenCalledWith(mockTenant.id);
       expect(result).toEqual(mockTenant);
     });
 
-    it('should create a tenant without domain', async () => {
+    it('should create a tenant without domain and with default styling', async () => {
       const createTenantDto: CreateTenantDto = {
         slug: 'cooking-tips',
         name: 'Cooking Tips',
@@ -102,6 +115,7 @@ describe('TenantService', () => {
       const result = await service.create(createTenantDto);
 
       expect(repository.create).toHaveBeenCalledWith(createTenantDto);
+      expect(stylingService.createDefaultStyling).toHaveBeenCalledWith(mockTenantWithoutDomain.id);
       expect(result).toEqual(mockTenantWithoutDomain);
     });
   });

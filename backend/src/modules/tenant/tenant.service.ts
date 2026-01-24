@@ -1,10 +1,11 @@
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 import { Tenant } from '../../entities/tenant.entity';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
+import { StylingService } from '../../styling/styling.service';
 
 @Injectable()
 export class TenantService {
@@ -16,11 +17,17 @@ export class TenantService {
     private readonly tenantRepository: Repository<Tenant>,
     @Inject(CACHE_MANAGER)
     private readonly cacheManager: Cache,
+    @Inject(forwardRef(() => StylingService))
+    private readonly stylingService: StylingService,
   ) {}
 
   async create(createTenantDto: CreateTenantDto): Promise<Tenant> {
     const tenant = this.tenantRepository.create(createTenantDto);
     const savedTenant = await this.tenantRepository.save(tenant);
+
+    // Create default styling for the new tenant
+    await this.stylingService.createDefaultStyling(savedTenant.id);
+
     return savedTenant;
   }
 

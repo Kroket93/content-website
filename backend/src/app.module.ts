@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TenantModule } from './modules/tenant/tenant.module';
 import { ContentModule } from './content/content.module';
+import { StylingModule } from './styling/styling.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { ContentModule } from './content/content.module';
     }),
     TenantModule,
     ContentModule,
+    StylingModule,
   ],
   controllers: [AppController],
   providers: [AppService],
