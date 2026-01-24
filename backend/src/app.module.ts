@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TenantModule } from './modules/tenant/tenant.module';
+import { ContentModule } from './content/content.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { TenantModule } from './modules/tenant/tenant.module';
       }),
     }),
     TenantModule,
+    ContentModule,
   ],
   controllers: [AppController],
   providers: [AppService],
