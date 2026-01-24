@@ -35,10 +35,10 @@ export class Content {
   @Column('text')
   body: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   excerpt: string | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   featuredImage: string | null;
 
   @Column('simple-array', { nullable: true })
