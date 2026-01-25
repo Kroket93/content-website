@@ -8,21 +8,17 @@ import { TenantService } from './core/services/tenant.service';
 import { StylingService } from './core/services/styling.service';
 
 /**
- * Initialize tenant context from URL
- * This identifies and loads the current tenant
+ * Initialize tenant context and styling from URL
+ * This identifies and loads the current tenant, then loads styling
+ * Styling must be loaded after tenant to include the X-Tenant-ID header
  */
-function initializeTenant(): () => Promise<void> {
+function initializeTenantAndStyling(): () => Promise<void> {
   const tenantService = inject(TenantService);
-  return () => tenantService.initializeTenant();
-}
-
-/**
- * Initialize styling from API before app renders
- * Falls back to defaults if API call fails
- */
-function initializeStyling(): () => Promise<void> {
   const stylingService = inject(StylingService);
-  return () => firstValueFrom(stylingService.loadStyling());
+  return async () => {
+    await tenantService.initializeTenant();
+    await firstValueFrom(stylingService.loadStyling());
+  };
 }
 
 export const appConfig: ApplicationConfig = {
@@ -32,12 +28,7 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withFetch()),
     {
       provide: APP_INITIALIZER,
-      useFactory: initializeTenant,
-      multi: true
-    },
-    {
-      provide: APP_INITIALIZER,
-      useFactory: initializeStyling,
+      useFactory: initializeTenantAndStyling,
       multi: true
     }
   ]

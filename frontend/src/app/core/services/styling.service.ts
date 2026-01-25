@@ -1,9 +1,10 @@
 import { Injectable, Inject, Renderer2, RendererFactory2 } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable, of, catchError, tap, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { TenantStyling, DEFAULT_STYLING } from '../../models/tenant-styling.model';
+import { TenantService } from './tenant.service';
 
 // Re-export the interface for backward compatibility
 export type { TenantStyling } from '../../models/tenant-styling.model';
@@ -42,9 +43,21 @@ export class StylingService {
   constructor(
     private http: HttpClient,
     private rendererFactory: RendererFactory2,
-    @Inject(DOCUMENT) private document: Document
+    @Inject(DOCUMENT) private document: Document,
+    private tenantService: TenantService
   ) {
     this.renderer = this.rendererFactory.createRenderer(null, null);
+  }
+
+  private getHeaders(): HttpHeaders {
+    const tenant = this.tenantService.getCurrentTenant();
+    let headers = new HttpHeaders();
+
+    if (tenant) {
+      headers = headers.set('X-Tenant-ID', tenant.id);
+    }
+
+    return headers;
   }
 
   /**
@@ -67,7 +80,9 @@ export class StylingService {
    * Falls back to defaults if API call fails
    */
   loadStyling(): Observable<void> {
-    return this.http.get<TenantStyling>(this.apiUrl).pipe(
+    return this.http.get<TenantStyling>(this.apiUrl, {
+      headers: this.getHeaders()
+    }).pipe(
       tap((styling) => {
         this.stylingLoaded = true;
         this.applyStyling(styling);
@@ -88,7 +103,9 @@ export class StylingService {
    * @param tenantId The tenant identifier
    */
   loadStylingForTenant(tenantId: string): Observable<TenantStyling | null> {
-    return this.http.get<TenantStyling>(`${this.apiUrl}/${tenantId}`).pipe(
+    return this.http.get<TenantStyling>(`${this.apiUrl}/${tenantId}`, {
+      headers: this.getHeaders()
+    }).pipe(
       tap((styling) => {
         this.stylingLoaded = true;
         this.applyStyling(styling);
@@ -185,7 +202,9 @@ export class StylingService {
    * Update tenant styling via API
    */
   updateStyling(tenantId: string, styling: Partial<TenantStyling>): Observable<TenantStyling> {
-    return this.http.put<TenantStyling>(`${this.apiUrl}/${tenantId}`, styling).pipe(
+    return this.http.put<TenantStyling>(`${this.apiUrl}/${tenantId}`, styling, {
+      headers: this.getHeaders()
+    }).pipe(
       tap((updatedStyling) => {
         this.applyStyling(updatedStyling);
       }),
