@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CacheModule } from '@nestjs/cache-manager';
 import { Tenant } from '../../entities/tenant.entity';
 import { TenantService } from './tenant.service';
+import { TenantController } from './tenant.controller';
 import { StylingModule } from '../../styling/styling.module';
 
 @Module({
@@ -14,6 +15,7 @@ import { StylingModule } from '../../styling/styling.module';
     }),
     forwardRef(() => StylingModule),
   ],
+  controllers: [TenantController],
   providers: [TenantService],
   exports: [TenantService],
 })

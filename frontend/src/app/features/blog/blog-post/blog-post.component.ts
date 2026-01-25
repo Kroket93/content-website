@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -25,7 +25,8 @@ export class BlogPostComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private contentService: ContentService,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -55,11 +56,13 @@ export class BlogPostComponent implements OnInit, OnDestroy {
         this.post = post;
         this.sanitizedContent = this.sanitizeHtml(post.body);
         this.isLoading = false;
+        this.cdr.detectChanges();
       },
       error: (err: Error) => {
         console.error('Error loading post:', err);
         this.errorMessage = err.message || 'Failed to load post. Please try again later.';
         this.isLoading = false;
+        this.cdr.detectChanges();
       }
     });
   }

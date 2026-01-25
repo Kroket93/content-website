@@ -1,11 +1,14 @@
-import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { BehaviorSubject, Observable, firstValueFrom } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export interface Tenant {
   id: string;
   name: string;
-  subdomain: string;
+  slug: string;
   domain?: string;
+  isActive?: boolean;
   settings?: TenantSettings;
 }
 
@@ -20,10 +23,10 @@ export interface TenantSettings {
   providedIn: 'root'
 })
 export class TenantService {
+  private readonly http = inject(HttpClient);
+  private readonly apiUrl = environment.apiUrl;
   private currentTenantSubject = new BehaviorSubject<Tenant | null>(null);
   public currentTenant$: Observable<Tenant | null> = this.currentTenantSubject.asObservable();
-
-  constructor() {}
 
   /**
    * Get the current tenant
@@ -54,7 +57,7 @@ export class TenantService {
 
     // Check for path-based tenant (e.g., /tenant1/)
     const pathParts = window.location.pathname.split('/').filter(Boolean);
-    if (pathParts.length > 0) {
+    if (pathParts.length > 0 && !['blog', 'home', 'about', 'contact'].includes(pathParts[0])) {
       return pathParts[0];
     }
 
@@ -63,13 +66,55 @@ export class TenantService {
 
   /**
    * Load tenant configuration from the API
-   * @param tenantId The tenant identifier
+   * @param tenantSlug The tenant slug/identifier
    */
-  async loadTenant(tenantId: string): Promise<Tenant | null> {
-    // TODO: Implement API call to load tenant
-    // For now, return a stub
-    console.log(`Loading tenant: ${tenantId}`);
-    return null;
+  async loadTenant(tenantSlug: string): Promise<Tenant | null> {
+    try {
+      const tenant = await firstValueFrom(
+        this.http.get<Tenant>(`${this.apiUrl}/tenants/by-slug/${tenantSlug}`)
+      );
+      if (tenant) {
+        this.setCurrentTenant(tenant);
+      }
+      return tenant;
+    } catch (error) {
+      console.error(`Failed to load tenant with slug "${tenantSlug}":`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Initialize tenant context - called during app initialization
+   * Tries to identify and load tenant from URL
+   */
+  async initializeTenant(): Promise<void> {
+    const tenantSlug = this.identifyTenantFromUrl();
+
+    if (tenantSlug) {
+      await this.loadTenant(tenantSlug);
+    } else {
+      // For local development or when no tenant is identified from URL,
+      // try to load a default tenant
+      await this.loadDefaultTenant();
+    }
+  }
+
+  /**
+   * Load the default tenant for the application
+   * Used when no tenant can be identified from URL
+   */
+  private async loadDefaultTenant(): Promise<void> {
+    try {
+      // Try to load a default tenant (e.g., 'default' or the first available tenant)
+      const tenant = await firstValueFrom(
+        this.http.get<Tenant>(`${this.apiUrl}/tenants/by-slug/default`)
+      );
+      if (tenant) {
+        this.setCurrentTenant(tenant);
+      }
+    } catch {
+      console.warn('No default tenant found. Content requests may fail without a tenant context.');
+    }
   }
 
   /**
