@@ -54,6 +54,7 @@ export class BlogListComponent implements OnInit, OnDestroy {
         this.totalPosts = response.total;
         this.totalPages = Math.ceil(response.total / this.pageSize);
         this.isLoading = false;
+        this.cdr.detectChanges();
       },
       error: (err: Error) => {
         console.error('Error loading posts:', err);

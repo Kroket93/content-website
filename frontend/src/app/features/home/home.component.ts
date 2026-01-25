@@ -56,6 +56,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       next: (response) => {
         this.featuredPosts = response.items.slice(0, 3);
         this.isLoadingFeatured = false;
+        this.cdr.detectChanges();
       },
       error: (err: Error) => {
         console.error('Error loading featured posts:', err);
@@ -78,6 +79,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       next: (response) => {
         this.recentPosts = response.items.slice(0, 6);
         this.isLoadingRecent = false;
+        this.cdr.detectChanges();
       },
       error: (err: Error) => {
         console.error('Error loading recent posts:', err);
