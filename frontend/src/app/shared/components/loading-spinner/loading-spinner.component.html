@@ -1,0 +1,6 @@
+<div class="spinner-container" [class]="size">
+  <div class="spinner" role="status" aria-label="Loading">
+    <div class="spinner-circle"></div>
+  </div>
+  <span *ngIf="showMessage" class="spinner-message">{{ message }}</span>
+</div>
