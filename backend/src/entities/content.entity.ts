@@ -50,7 +50,7 @@ export class Content {
   })
   status: ContentStatus;
 
-  @Column({ nullable: true })
+  @Column({ type: 'datetime', nullable: true })
   publishedAt: Date | null;
 
   @CreateDateColumn()
