@@ -20,6 +20,8 @@ import { StylingModule } from './styling/styling.module';
         type: 'better-sqlite3',
         database: configService.get<string>('DATABASE_PATH', './data/content-website.sqlite'),
         entities: [__dirname + '/entities/**/*.entity{.ts,.js}'],
+        migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
+        migrationsRun: true,
         synchronize: configService.get<string>('NODE_ENV') === 'development',
         logging: configService.get<string>('NODE_ENV') === 'development',
       }),
