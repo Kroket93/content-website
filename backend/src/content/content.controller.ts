@@ -14,7 +14,7 @@ import { ContentService } from './content.service';
 import { CreateContentDto, UpdateContentDto } from './dto';
 import { Content } from '../entities/content.entity';
 
-@Controller('api/content')
+@Controller('content')
 export class ContentController {
   constructor(private readonly contentService: ContentService) {}
 
