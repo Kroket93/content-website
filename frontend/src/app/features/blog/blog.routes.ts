@@ -1,9 +1,14 @@
 import { Routes } from '@angular/router';
-import { BlogComponent } from './blog.component';
+import { BlogListComponent } from './blog.component';
+import { BlogPostComponent } from './blog-post/blog-post.component';
 
 export const BLOG_ROUTES: Routes = [
   {
     path: '',
-    component: BlogComponent
+    component: BlogListComponent
+  },
+  {
+    path: ':id',
+    component: BlogPostComponent
   }
 ];
