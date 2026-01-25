@@ -1,24 +1,33 @@
 import { Injectable, Inject, Renderer2, RendererFactory2 } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { BehaviorSubject, Observable, of, catchError, tap, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { TenantService } from './tenant.service';
+import { TenantStyling, DEFAULT_STYLING } from '../../models/tenant-styling.model';
 
-export interface TenantStyling {
-  id: string;
-  tenantId: string;
-  primaryColor: string;
-  secondaryColor: string;
-  accentColor?: string;
-  backgroundColor?: string;
-  textColor?: string;
-  fontFamily?: string;
-  headerFontFamily?: string;
-  logoUrl?: string;
-  faviconUrl?: string;
-  customCss?: string;
-}
+// Re-export the interface for backward compatibility
+export type { TenantStyling } from '../../models/tenant-styling.model';
+
+/**
+ * List of potentially dangerous CSS patterns that should be sanitized
+ */
+const DANGEROUS_CSS_PATTERNS = [
+  /javascript:/gi,
+  /expression\s*\(/gi,
+  /behavior\s*:/gi,
+  /-moz-binding/gi,
+  /@import/gi,
+  /@charset/gi,
+  /url\s*\(\s*["']?\s*data:/gi,
+];
+
+/**
+ * List of dangerous CSS properties that can be used for attacks
+ */
+const DANGEROUS_PROPERTIES = [
+  'behavior',
+  '-moz-binding',
+];
 
 @Injectable({
   providedIn: 'root'
@@ -28,10 +37,10 @@ export class StylingService {
   private renderer: Renderer2;
   private currentStylingSubject = new BehaviorSubject<TenantStyling | null>(null);
   public currentStyling$: Observable<TenantStyling | null> = this.currentStylingSubject.asObservable();
+  private stylingLoaded = false;
 
   constructor(
     private http: HttpClient,
-    private tenantService: TenantService,
     private rendererFactory: RendererFactory2,
     @Inject(DOCUMENT) private document: Document
   ) {
@@ -46,13 +55,57 @@ export class StylingService {
   }
 
   /**
-   * Load styling configuration for a tenant
+   * Check if styling has been loaded
    */
-  loadStyling(tenantId: string): Observable<TenantStyling | null> {
-    // TODO: Implement API call
-    // return this.http.get<TenantStyling>(`${this.apiUrl}/${tenantId}`);
-    console.log('Loading styling for tenant:', tenantId);
-    return of(null);
+  isStylingLoaded(): boolean {
+    return this.stylingLoaded;
+  }
+
+  /**
+   * Load styling configuration from the API
+   * Returns Observable<void> for use with APP_INITIALIZER
+   * Falls back to defaults if API call fails
+   */
+  loadStyling(): Observable<void> {
+    return this.http.get<TenantStyling>(this.apiUrl).pipe(
+      tap((styling) => {
+        this.stylingLoaded = true;
+        this.applyStyling(styling);
+      }),
+      map(() => void 0),
+      catchError((error: HttpErrorResponse) => {
+        console.warn('Failed to load styling from API, using defaults:', error.message);
+        this.stylingLoaded = true;
+        this.applyDefaultStyling();
+        // Return successfully to allow app to continue
+        return of(void 0);
+      })
+    );
+  }
+
+  /**
+   * Load styling for a specific tenant
+   * @param tenantId The tenant identifier
+   */
+  loadStylingForTenant(tenantId: string): Observable<TenantStyling | null> {
+    return this.http.get<TenantStyling>(`${this.apiUrl}/${tenantId}`).pipe(
+      tap((styling) => {
+        this.stylingLoaded = true;
+        this.applyStyling(styling);
+      }),
+      catchError((error: HttpErrorResponse) => {
+        console.warn(`Failed to load styling for tenant "${tenantId}":`, error.message);
+        this.applyDefaultStyling();
+        return of(null);
+      })
+    );
+  }
+
+  /**
+   * Apply default styling values
+   */
+  private applyDefaultStyling(): void {
+    this.applyStyling(DEFAULT_STYLING);
   }
 
   /**
@@ -61,7 +114,7 @@ export class StylingService {
   applyStyling(styling: TenantStyling): void {
     this.currentStylingSubject.next(styling);
 
-    // Apply CSS custom properties
+    // Apply CSS custom properties to document.documentElement
     const root = this.document.documentElement;
 
     if (styling.primaryColor) {
@@ -85,10 +138,19 @@ export class StylingService {
     if (styling.headerFontFamily) {
       root.style.setProperty('--header-font-family', styling.headerFontFamily);
     }
+    if (styling.baseFontSize !== undefined) {
+      root.style.setProperty('--base-font-size', `${styling.baseFontSize}px`);
+    }
+    if (styling.maxContentWidth !== undefined) {
+      root.style.setProperty('--max-content-width', `${styling.maxContentWidth}px`);
+    }
 
-    // Apply custom CSS if provided
+    // Apply custom CSS if provided (with sanitization)
     if (styling.customCss) {
       this.injectCustomCss(styling.customCss);
+    } else {
+      // Remove any previously injected custom CSS
+      this.removeCustomCss();
     }
 
     // Update favicon if provided
@@ -104,7 +166,7 @@ export class StylingService {
     this.currentStylingSubject.next(null);
     const root = this.document.documentElement;
 
-    // Remove custom properties
+    // Remove custom properties (browser will fall back to :root values)
     root.style.removeProperty('--primary-color');
     root.style.removeProperty('--secondary-color');
     root.style.removeProperty('--accent-color');
@@ -112,6 +174,8 @@ export class StylingService {
     root.style.removeProperty('--text-color');
     root.style.removeProperty('--font-family');
     root.style.removeProperty('--header-font-family');
+    root.style.removeProperty('--base-font-size');
+    root.style.removeProperty('--max-content-width');
 
     // Remove injected custom CSS
     this.removeCustomCss();
@@ -121,32 +185,93 @@ export class StylingService {
    * Update tenant styling via API
    */
   updateStyling(tenantId: string, styling: Partial<TenantStyling>): Observable<TenantStyling> {
-    // TODO: Implement API call
-    // return this.http.put<TenantStyling>(`${this.apiUrl}/${tenantId}`, styling);
-    console.log('Updating styling for tenant:', tenantId, styling);
-    return of(styling as TenantStyling);
+    return this.http.put<TenantStyling>(`${this.apiUrl}/${tenantId}`, styling).pipe(
+      tap((updatedStyling) => {
+        this.applyStyling(updatedStyling);
+      }),
+      catchError((error: HttpErrorResponse) => {
+        console.error(`Failed to update styling for tenant "${tenantId}":`, error.message);
+        throw error;
+      })
+    );
   }
 
   /**
-   * Inject custom CSS into the document
+   * Inject custom CSS into the document safely
+   * Removes previous custom styles before applying new ones
+   * Sanitizes CSS to prevent XSS attacks
    */
-  private injectCustomCss(css: string): void {
+  injectCustomCss(css: string): void {
+    // Remove any existing custom CSS first
     this.removeCustomCss();
+
+    // Sanitize the CSS before injection
+    const sanitizedCss = this.sanitizeCss(css);
+
+    if (!sanitizedCss) {
+      console.warn('Custom CSS was rejected due to potentially dangerous content');
+      return;
+    }
 
     const style = this.renderer.createElement('style');
     style.id = 'tenant-custom-css';
-    style.textContent = css;
+    style.type = 'text/css';
+    style.textContent = sanitizedCss;
     this.renderer.appendChild(this.document.head, style);
   }
 
   /**
-   * Remove injected custom CSS
+   * Remove injected custom CSS from the document
    */
-  private removeCustomCss(): void {
+  removeCustomCss(): void {
     const existingStyle = this.document.getElementById('tenant-custom-css');
     if (existingStyle) {
       existingStyle.remove();
     }
+  }
+
+  /**
+   * Sanitize CSS to prevent XSS and other injection attacks
+   * @param css The raw CSS string to sanitize
+   * @returns Sanitized CSS string or empty string if unsafe
+   */
+  private sanitizeCss(css: string): string {
+    if (!css || typeof css !== 'string') {
+      return '';
+    }
+
+    let sanitized = css;
+
+    // Check for dangerous patterns
+    for (const pattern of DANGEROUS_CSS_PATTERNS) {
+      if (pattern.test(sanitized)) {
+        console.warn(`Dangerous CSS pattern detected: ${pattern}`);
+        return '';
+      }
+    }
+
+    // Remove any script tags or event handlers that might have slipped through
+    sanitized = sanitized.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+    sanitized = sanitized.replace(/on\w+\s*=/gi, '');
+
+    // Check for dangerous properties
+    for (const prop of DANGEROUS_PROPERTIES) {
+      const propRegex = new RegExp(`${prop}\\s*:`, 'gi');
+      if (propRegex.test(sanitized)) {
+        console.warn(`Dangerous CSS property detected: ${prop}`);
+        return '';
+      }
+    }
+
+    // Basic validation: ensure balanced braces
+    const openBraces = (sanitized.match(/{/g) || []).length;
+    const closeBraces = (sanitized.match(/}/g) || []).length;
+    if (openBraces !== closeBraces) {
+      console.warn('CSS has unbalanced braces');
+      return '';
+    }
+
+    return sanitized.trim();
   }
 
   /**
