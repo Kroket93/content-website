@@ -11,7 +11,7 @@ import { StylingService } from './styling.service';
 import { CreateStylingDto } from './dto';
 import { TenantStyling } from '../entities/tenant-styling.entity';
 
-@Controller('api/styling')
+@Controller('styling')
 export class StylingController {
   constructor(private readonly stylingService: StylingService) {}
 
