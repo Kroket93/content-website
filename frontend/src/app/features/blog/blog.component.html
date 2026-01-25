@@ -7,20 +7,68 @@
   <div class="blog-content">
     <app-loading-spinner *ngIf="isLoading" message="Loading posts..."></app-loading-spinner>
 
-    <div *ngIf="!isLoading && posts.length === 0" class="no-posts">
+    <div *ngIf="!isLoading && errorMessage" class="error-message">
+      <div class="error-icon">!</div>
+      <p>{{ errorMessage }}</p>
+      <button (click)="loadPosts()" class="retry-button">Try Again</button>
+    </div>
+
+    <div *ngIf="!isLoading && !errorMessage && posts.length === 0" class="no-posts">
       <p>No blog posts available yet. Check back soon!</p>
     </div>
 
-    <div *ngIf="!isLoading && posts.length > 0" class="posts-grid">
+    <div *ngIf="!isLoading && !errorMessage && posts.length > 0" class="posts-grid">
       <article *ngFor="let post of posts" class="post-card">
-        <h2>{{ post.title }}</h2>
-        <p class="excerpt">{{ post.excerpt }}</p>
-        <div class="post-meta">
-          <span *ngIf="post.author">By {{ post.author }}</span>
-          <span *ngIf="post.publishedAt">{{ post.publishedAt | date:'mediumDate' }}</span>
+        <div *ngIf="post.featuredImage" class="post-image">
+          <img [src]="post.featuredImage" [alt]="post.title" />
         </div>
-        <a [routerLink]="['/blog', post.slug]" class="read-more">Read More</a>
+        <div class="post-content">
+          <h2>{{ post.title }}</h2>
+          <p class="excerpt">{{ post.excerpt || (post.body | slice:0:150) + '...' }}</p>
+          <div class="post-meta">
+            <span *ngIf="post.author" class="author">By {{ post.author }}</span>
+            <span *ngIf="post.publishedAt" class="date">{{ post.publishedAt | date:'mediumDate' }}</span>
+          </div>
+          <div *ngIf="post.tags && post.tags.length > 0" class="post-tags">
+            <span *ngFor="let tag of post.tags" class="tag">{{ tag }}</span>
+          </div>
+          <a [routerLink]="['/blog', post.id]" class="read-more">Read More</a>
+        </div>
       </article>
+    </div>
+
+    <nav *ngIf="!isLoading && !errorMessage && totalPages > 1" class="pagination" aria-label="Blog pagination">
+      <button
+        class="page-btn prev"
+        (click)="previousPage()"
+        [disabled]="currentPage === 1"
+        aria-label="Previous page">
+        &laquo; Prev
+      </button>
+
+      <div class="page-numbers">
+        <button
+          *ngFor="let page of getPageNumbers()"
+          class="page-btn"
+          [class.active]="page === currentPage"
+          (click)="goToPage(page)"
+          [attr.aria-label]="'Page ' + page"
+          [attr.aria-current]="page === currentPage ? 'page' : null">
+          {{ page }}
+        </button>
+      </div>
+
+      <button
+        class="page-btn next"
+        (click)="nextPage()"
+        [disabled]="currentPage === totalPages"
+        aria-label="Next page">
+        Next &raquo;
+      </button>
+    </nav>
+
+    <div *ngIf="!isLoading && !errorMessage && totalPosts > 0" class="results-info">
+      Showing {{ (currentPage - 1) * pageSize + 1 }} - {{ currentPage * pageSize > totalPosts ? totalPosts : currentPage * pageSize }} of {{ totalPosts }} posts
     </div>
   </div>
 </div>

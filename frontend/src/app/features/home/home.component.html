@@ -1,22 +1,81 @@
 <div class="home-container">
   <section class="hero">
-    <h1>Welcome to Multi-Tenant Content Website</h1>
-    <p>A dynamic platform for managing and displaying content across multiple tenants.</p>
-    <a routerLink="/blog" class="cta-button">View Blog</a>
+    <h1>{{ tenant?.name || 'Welcome to Our Blog' }}</h1>
+    <p>Discover stories, insights, and ideas from our community.</p>
+    <a routerLink="/blog" class="cta-button">View All Posts</a>
   </section>
 
-  <section class="features">
-    <div class="feature-card">
-      <h3>Multi-Tenant Support</h3>
-      <p>Each tenant gets their own customized experience with unique styling and content.</p>
+  <div *ngIf="errorMessage" class="error-message">
+    <div class="error-icon">!</div>
+    <p>{{ errorMessage }}</p>
+    <button (click)="retryLoading()" class="retry-button">Try Again</button>
+  </div>
+
+  <section class="featured-section" *ngIf="!errorMessage">
+    <div class="section-header">
+      <h2>Featured Posts</h2>
+      <p>Hand-picked articles we think you'll love</p>
     </div>
-    <div class="feature-card">
-      <h3>Dynamic Styling</h3>
-      <p>Customize colors, fonts, and layouts per tenant with our flexible styling system.</p>
+
+    <app-loading-spinner *ngIf="isLoadingFeatured" message="Loading featured posts..."></app-loading-spinner>
+
+    <div *ngIf="!isLoadingFeatured && featuredPosts.length === 0" class="no-posts">
+      <p>No featured posts available yet.</p>
     </div>
-    <div class="feature-card">
-      <h3>Content Management</h3>
-      <p>Create, edit, and publish content with ease using our intuitive API.</p>
+
+    <div *ngIf="!isLoadingFeatured && featuredPosts.length > 0" class="featured-grid">
+      <article *ngFor="let post of featuredPosts; let i = index" class="featured-card" [class.main-feature]="i === 0">
+        <div *ngIf="post.featuredImage" class="card-image">
+          <img [src]="post.featuredImage" [alt]="post.title" />
+        </div>
+        <div class="card-content">
+          <div *ngIf="post.tags && post.tags.length > 0" class="post-tags">
+            <span *ngFor="let tag of post.tags.slice(0, 2)" class="tag">{{ tag }}</span>
+          </div>
+          <h3>{{ post.title }}</h3>
+          <p class="excerpt">{{ post.excerpt || (post.body | slice:0:120) + '...' }}</p>
+          <div class="post-meta">
+            <span *ngIf="post.author" class="author">{{ post.author }}</span>
+            <span *ngIf="post.publishedAt" class="date">{{ post.publishedAt | date:'mediumDate' }}</span>
+          </div>
+          <a [routerLink]="['/blog', post.id]" class="read-more">Read Article</a>
+        </div>
+      </article>
     </div>
+  </section>
+
+  <section class="recent-section" *ngIf="!errorMessage">
+    <div class="section-header">
+      <h2>Recent Posts</h2>
+      <a routerLink="/blog" class="view-all">View All &rarr;</a>
+    </div>
+
+    <app-loading-spinner *ngIf="isLoadingRecent" message="Loading recent posts..."></app-loading-spinner>
+
+    <div *ngIf="!isLoadingRecent && recentPosts.length === 0" class="no-posts">
+      <p>No recent posts available yet. Check back soon!</p>
+    </div>
+
+    <div *ngIf="!isLoadingRecent && recentPosts.length > 0" class="recent-grid">
+      <article *ngFor="let post of recentPosts" class="recent-card">
+        <div *ngIf="post.featuredImage" class="card-image">
+          <img [src]="post.featuredImage" [alt]="post.title" />
+        </div>
+        <div class="card-content">
+          <h3>{{ post.title }}</h3>
+          <p class="excerpt">{{ post.excerpt || (post.body | slice:0:100) + '...' }}</p>
+          <div class="post-meta">
+            <span *ngIf="post.publishedAt" class="date">{{ post.publishedAt | date:'shortDate' }}</span>
+          </div>
+          <a [routerLink]="['/blog', post.id]" class="read-more">Read More</a>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="cta-section">
+    <h2>Want to see more?</h2>
+    <p>Browse our complete collection of articles and stay updated with the latest content.</p>
+    <a routerLink="/blog" class="cta-button">Explore All Posts</a>
   </section>
 </div>
