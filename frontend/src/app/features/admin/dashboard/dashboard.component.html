@@ -1,0 +1,76 @@
+<div class="dashboard">
+  <h2 class="section-title">Dashboard</h2>
+
+  <app-loading-spinner *ngIf="isLoading" message="Loading dashboard..."></app-loading-spinner>
+
+  <div *ngIf="!isLoading && errorMessage" class="error-message">
+    <p>{{ errorMessage }}</p>
+    <button (click)="loadDashboardData()" class="retry-btn">Try Again</button>
+  </div>
+
+  <div *ngIf="!isLoading && !errorMessage" class="dashboard-content">
+    <div class="stats-grid">
+      <div class="stat-card total">
+        <div class="stat-icon">T</div>
+        <div class="stat-info">
+          <span class="stat-value">{{ stats.total }}</span>
+          <span class="stat-label">Total Content</span>
+        </div>
+      </div>
+      <div class="stat-card published">
+        <div class="stat-icon">P</div>
+        <div class="stat-info">
+          <span class="stat-value">{{ stats.published }}</span>
+          <span class="stat-label">Published</span>
+        </div>
+      </div>
+      <div class="stat-card draft">
+        <div class="stat-icon">D</div>
+        <div class="stat-info">
+          <span class="stat-value">{{ stats.draft }}</span>
+          <span class="stat-label">Drafts</span>
+        </div>
+      </div>
+      <div class="stat-card archived">
+        <div class="stat-icon">A</div>
+        <div class="stat-info">
+          <span class="stat-value">{{ stats.archived }}</span>
+          <span class="stat-label">Archived</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="quick-actions">
+      <h3>Quick Actions</h3>
+      <div class="actions-grid">
+        <a routerLink="/admin/content/new" class="action-btn primary">
+          <span class="action-icon">+</span>
+          <span>Create New Content</span>
+        </a>
+        <a routerLink="/admin/content" class="action-btn secondary">
+          <span class="action-icon">L</span>
+          <span>View All Content</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="recent-content">
+      <h3>Recent Content</h3>
+      <div *ngIf="recentContent.length === 0" class="no-content">
+        <p>No content yet. <a routerLink="/admin/content/new">Create your first content</a></p>
+      </div>
+      <div *ngIf="recentContent.length > 0" class="content-list">
+        <div *ngFor="let item of recentContent" class="content-item">
+          <div class="content-info">
+            <h4 class="content-title">{{ item.title }}</h4>
+            <div class="content-meta">
+              <span class="status-badge" [ngClass]="getStatusClass(item.status)">{{ item.status }}</span>
+              <span class="date" *ngIf="item.updatedAt">Updated: {{ item.updatedAt | date:'short' }}</span>
+            </div>
+          </div>
+          <a [routerLink]="['/admin/content', item.id, 'edit']" class="edit-link">Edit</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
