@@ -6,10 +6,12 @@ import {
   Headers,
   BadRequestException,
   Header,
+  UseGuards,
 } from '@nestjs/common';
 import { StylingService } from './styling.service';
 import { CreateStylingDto } from './dto';
 import { TenantStyling } from '../entities/tenant-styling.entity';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('styling')
 export class StylingController {
@@ -23,6 +25,7 @@ export class StylingController {
   }
 
   @Post()
+  @UseGuards(JwtAuthGuard)
   async createOrUpdate(
     @Headers('x-tenant-id') tenantId: string,
     @Body() createStylingDto: CreateStylingDto,

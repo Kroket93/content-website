@@ -9,10 +9,12 @@ import {
   ParseUUIDPipe,
   Headers,
   BadRequestException,
+  UseGuards,
 } from '@nestjs/common';
 import { ContentService } from './content.service';
 import { CreateContentDto, UpdateContentDto } from './dto';
 import { Content } from '../entities/content.entity';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('content')
 export class ContentController {
@@ -26,6 +28,7 @@ export class ContentController {
   }
 
   @Post()
+  @UseGuards(JwtAuthGuard)
   async create(
     @Headers('x-tenant-id') tenantId: string,
     @Body() createContentDto: CreateContentDto,
@@ -50,6 +53,7 @@ export class ContentController {
   }
 
   @Put(':id')
+  @UseGuards(JwtAuthGuard)
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Headers('x-tenant-id') tenantId: string,
@@ -63,6 +67,7 @@ export class ContentController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
   async remove(
     @Param('id', ParseUUIDPipe) id: string,
     @Headers('x-tenant-id') tenantId: string,
