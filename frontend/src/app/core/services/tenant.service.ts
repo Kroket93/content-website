@@ -57,7 +57,7 @@ export class TenantService {
 
     // Check for path-based tenant (e.g., /tenant1/)
     const pathParts = window.location.pathname.split('/').filter(Boolean);
-    if (pathParts.length > 0 && !['blog', 'home', 'about', 'contact'].includes(pathParts[0])) {
+    if (pathParts.length > 0 && !['blog', 'home', 'about', 'contact', 'admin'].includes(pathParts[0])) {
       return pathParts[0];
     }
 

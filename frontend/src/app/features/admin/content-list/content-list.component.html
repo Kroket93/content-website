@@ -1,0 +1,84 @@
+<div class="content-list-page">
+  <div class="page-header">
+    <h2>Content Management</h2>
+    <a routerLink="/admin/content/new" class="create-btn">+ New Content</a>
+  </div>
+
+  <app-loading-spinner *ngIf="isLoading" message="Loading content..."></app-loading-spinner>
+
+  <div *ngIf="!isLoading && errorMessage" class="error-message">
+    <p>{{ errorMessage }}</p>
+    <button (click)="loadContent()" class="retry-btn">Try Again</button>
+  </div>
+
+  <div *ngIf="!isLoading && !errorMessage" class="content-section">
+    <div class="filters">
+      <div class="search-box">
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          (input)="onSearchChange()"
+          placeholder="Search content..."
+          class="search-input"
+        />
+      </div>
+      <div class="status-filter">
+        <label for="status">Status:</label>
+        <select id="status" [(ngModel)]="statusFilter" (change)="onStatusFilterChange()">
+          <option value="all">All</option>
+          <option value="published">Published</option>
+          <option value="draft">Draft</option>
+          <option value="archived">Archived</option>
+        </select>
+      </div>
+    </div>
+
+    <div *ngIf="filteredContent.length === 0" class="no-content">
+      <p *ngIf="content.length === 0">No content yet. <a routerLink="/admin/content/new">Create your first content</a></p>
+      <p *ngIf="content.length > 0">No content matches your filters.</p>
+    </div>
+
+    <div *ngIf="filteredContent.length > 0" class="content-table-wrapper">
+      <table class="content-table">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Status</th>
+            <th>Updated</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of filteredContent" [class.deleting]="deleteConfirmId === item.id">
+            <td class="title-cell">
+              <a [routerLink]="['/admin/content', item.id, 'edit']">{{ item.title }}</a>
+            </td>
+            <td>{{ item.author || '-' }}</td>
+            <td>
+              <span class="status-badge" [ngClass]="getStatusClass(item.status)">{{ item.status }}</span>
+            </td>
+            <td>{{ (item.updatedAt || item.createdAt) | date:'short' }}</td>
+            <td class="actions-cell">
+              <div *ngIf="deleteConfirmId !== item.id" class="action-buttons">
+                <a [routerLink]="['/admin/content', item.id, 'edit']" class="action-btn edit">Edit</a>
+                <button (click)="confirmDelete(item.id)" class="action-btn delete">Delete</button>
+              </div>
+              <div *ngIf="deleteConfirmId === item.id" class="confirm-delete">
+                <span>Delete?</span>
+                <button (click)="deleteContent(item.id)" [disabled]="isDeleting" class="confirm-btn yes">
+                  {{ isDeleting ? '...' : 'Yes' }}
+                </button>
+                <button (click)="cancelDelete()" [disabled]="isDeleting" class="confirm-btn no">No</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="results-info" *ngIf="filteredContent.length > 0">
+      Showing {{ filteredContent.length }} of {{ content.length }} items
+    </div>
+  </div>
+</div>

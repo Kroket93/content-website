@@ -1,0 +1,49 @@
+<div class="admin-layout" [class.sidebar-collapsed]="sidebarCollapsed">
+  <aside class="admin-sidebar">
+    <div class="sidebar-header">
+      <h2 class="logo">
+        <span class="logo-icon">CMS</span>
+        <span class="logo-text" *ngIf="!sidebarCollapsed">Admin</span>
+      </h2>
+      <button class="toggle-btn" (click)="toggleSidebar()" [attr.aria-label]="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'">
+        <span class="toggle-icon">{{ sidebarCollapsed ? '>' : '<' }}</span>
+      </button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a routerLink="/admin/dashboard" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">D</span>
+        <span class="nav-text" *ngIf="!sidebarCollapsed">Dashboard</span>
+      </a>
+      <a routerLink="/admin/content" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-item">
+        <span class="nav-icon">C</span>
+        <span class="nav-text" *ngIf="!sidebarCollapsed">Content</span>
+      </a>
+      <a routerLink="/admin/content/new" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">+</span>
+        <span class="nav-text" *ngIf="!sidebarCollapsed">New Content</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer" *ngIf="!sidebarCollapsed">
+      <div class="tenant-info" *ngIf="tenant">
+        <span class="tenant-label">Tenant:</span>
+        <span class="tenant-name">{{ tenant.name }}</span>
+      </div>
+      <a routerLink="/" class="back-link">Back to Site</a>
+    </div>
+  </aside>
+
+  <main class="admin-main">
+    <header class="admin-header">
+      <h1 class="page-title">Content Management</h1>
+      <div class="header-actions">
+        <a routerLink="/" class="view-site-btn">View Site</a>
+      </div>
+    </header>
+
+    <div class="admin-content">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+</div>

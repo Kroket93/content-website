@@ -1,0 +1,131 @@
+<div class="content-editor-page">
+  <div class="page-header">
+    <div class="header-left">
+      <a routerLink="/admin/content" class="back-link">&larr; Back to Content</a>
+      <h2>{{ isEditMode ? 'Edit Content' : 'Create New Content' }}</h2>
+    </div>
+  </div>
+
+  <app-loading-spinner *ngIf="isLoading" message="Loading content..."></app-loading-spinner>
+
+  <div *ngIf="!isLoading" class="editor-content">
+    <div *ngIf="errorMessage" class="message error">
+      <p>{{ errorMessage }}</p>
+      <button (click)="errorMessage = null" class="close-btn">&times;</button>
+    </div>
+
+    <div *ngIf="successMessage" class="message success">
+      <p>{{ successMessage }}</p>
+      <button (click)="successMessage = null" class="close-btn">&times;</button>
+    </div>
+
+    <form (ngSubmit)="saveContent()" class="editor-form">
+      <div class="form-main">
+        <div class="form-group">
+          <label for="title">Title *</label>
+          <input
+            type="text"
+            id="title"
+            [(ngModel)]="formData.title"
+            name="title"
+            placeholder="Enter content title"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="body">Content Body *</label>
+          <textarea
+            id="body"
+            [(ngModel)]="formData.body"
+            name="body"
+            placeholder="Write your content here..."
+            rows="15"
+            required
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="excerpt">Excerpt</label>
+          <textarea
+            id="excerpt"
+            [(ngModel)]="formData.excerpt"
+            name="excerpt"
+            placeholder="Short summary of the content (optional)"
+            rows="3"
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="form-sidebar">
+        <div class="sidebar-section">
+          <h3>Publish</h3>
+          <div class="form-group">
+            <label for="status">Status</label>
+            <select id="status" [(ngModel)]="formData.status" name="status">
+              <option value="draft">Draft</option>
+              <option value="published">Published</option>
+              <option value="archived">Archived</option>
+            </select>
+          </div>
+          <div class="publish-actions">
+            <button
+              type="button"
+              (click)="saveAsDraft()"
+              [disabled]="isSaving"
+              class="btn btn-secondary"
+            >
+              {{ isSaving ? 'Saving...' : 'Save Draft' }}
+            </button>
+            <button
+              type="button"
+              (click)="saveAndPublish()"
+              [disabled]="isSaving"
+              class="btn btn-primary"
+            >
+              {{ isSaving ? 'Publishing...' : 'Publish' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="sidebar-section">
+          <h3>Details</h3>
+          <div class="form-group">
+            <label for="author">Author</label>
+            <input
+              type="text"
+              id="author"
+              [(ngModel)]="formData.author"
+              name="author"
+              placeholder="Author name"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="featuredImage">Featured Image URL</label>
+            <input
+              type="url"
+              id="featuredImage"
+              [(ngModel)]="formData.featuredImage"
+              name="featuredImage"
+              placeholder="https://example.com/image.jpg"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="tags">Tags</label>
+            <input
+              type="text"
+              id="tags"
+              [(ngModel)]="tagsInput"
+              (input)="onTagsInputChange()"
+              name="tags"
+              placeholder="tag1, tag2, tag3"
+            />
+            <span class="field-hint">Separate tags with commas</span>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
